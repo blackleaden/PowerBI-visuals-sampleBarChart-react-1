@@ -48,11 +48,11 @@ import VisualObjectInstanceEnumerationObject = powerbi.VisualObjectInstanceEnume
 
 import { ColorHelper } from "powerbi-visuals-utils-colorutils";
 
-import { VisualState, DataEntry } from "./dataInterfaces";
+import { VisualProps, DataEntry } from "./dataInterfaces";
 import { LEGEND_HEIGHT } from "./constants";
 import { VisualSettings } from "./settings";
 import { ReactVisual } from "./reactUtils";
-import { mapOptionsToState, optionsAreValid } from "./optionsMapper";
+import { mapOptionsToProps, optionsAreValid } from "./optionsMapper";
 
 import { BarChart } from "./components/BarChart";
 import { Legend } from "./components/Legend";
@@ -62,26 +62,31 @@ import "./../style/visual.less";
 export interface ChartState {
     isTooltipShown?: boolean;
     tooltipEntry?: DataEntry;
+    legendHeight?: number;
 }
 
 export class SampleBarChartReact extends React.Component<
-    VisualState,
+    VisualProps,
     ChartState
 > {
-    constructor(props: VisualState) {
+    constructor(props: VisualProps) {
         super(props);
-        this.showTooltipAction = this.showTooltipAction.bind(this);
-        this.hideTooltipAction = this.hideTooltipAction.bind(this);
     }
 
-    public state: ChartState = {};
+    public state: ChartState = {
+      legendHeight: LEGEND_HEIGHT
+    };
 
-    showTooltipAction(tooltipEntry: DataEntry) {
+    showTooltipAction = (tooltipEntry: DataEntry) => {
         this.setState({ isTooltipShown: true, tooltipEntry });
     }
 
-    hideTooltipAction() {
+    hideTooltipAction = () => {
         this.setState({ isTooltipShown: false });
+    }
+
+    public setLegendHeight = (legendHeight: number) => {
+      this.setState({ legendHeight });
     }
 
     public render() {
@@ -89,11 +94,9 @@ export class SampleBarChartReact extends React.Component<
         const { isTooltipShown, tooltipEntry } = this.state;
 
         return viewport && category && settings && entries && measures ? (
-            <div
-                className={"bar-chart-wrapper"}
-                style={{ position: "relative" }}>
-                {isTooltipShown && (
+            <div className="bar-chart-wrapper">
                     <Tooltip
+                        isTooltipShown={isTooltipShown}
                         index={tooltipEntry.index}
                         name={tooltipEntry.name}
                         dataPoints={tooltipEntry.dataPoints}
@@ -101,15 +104,21 @@ export class SampleBarChartReact extends React.Component<
                         measures={measures}
                         categoryTitle={category.displayName}
                         categoryValue={tooltipEntry.name}
+                        viewportHeight={viewport.height}
+                        viewportWidth={viewport.width}
                     />
                 )}
-                <Legend {...{ ...viewport, height: LEGEND_HEIGHT, measures }} />
+                <Legend
+                  reportHeight={this.setLegendHeight}
+                  measures={measures}
+                />
                 <BarChart
                     {...{
                         ...viewport,
                         measures,
                         entries,
                         category,
+                        legendHeight: this.state.legendHeight,
                         showTooltip: this.showTooltipAction,
                         hideTooltip: this.hideTooltipAction
                     }}
@@ -129,7 +138,7 @@ export class Visual extends ReactVisual implements IVisual {
     private colorPalette: IColorPalette;
     private colorHelper: ColorHelper;
 
-    private state: VisualState;
+    private data: VisualProps;
 
     protected static shouldVisualUpdate(options: VisualUpdateOptions): boolean {
         return optionsAreValid(options);
@@ -161,13 +170,13 @@ export class Visual extends ReactVisual implements IVisual {
 
                 this.updateVisualProperties(options);
 
-                this.state = mapOptionsToState(
+                this.data = mapOptionsToProps(
                     options,
                     this.settings,
                     this.colorPalette
                 );
 
-                this.updateReactContainers(this.state);
+                this.updateReactContainers(this.data);
 
                 this.events.renderingFinished(options);
             } catch (e) {
@@ -187,7 +196,7 @@ export class Visual extends ReactVisual implements IVisual {
         );
 
         if (true || objectName === "barChart") {
-            this.state.measures.forEach(measure => {
+            this.data.measures.forEach(measure => {
                 const instance: VisualObjectInstance = {
                     displayName: measure.displayName,
                     objectName: "barChart",

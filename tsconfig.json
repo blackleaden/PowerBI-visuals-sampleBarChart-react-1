@@ -8,7 +8,6 @@
     "sourceMap": true,
     "outDir": "./.tmp/build/",
     "moduleResolution": "node",
-    "declaration": true,
     "types": ["react", "jest"],
     "lib": [
       "es2015",

@@ -52,7 +52,7 @@ import textMeasurementService = tms.textMeasurementService;
 import { pixelConverter as PixelConverter } from "powerbi-visuals-utils-typeutils";
 
 import {
-    VisualState,
+    VisualProps,
     Settings,
     ViewportData,
     MeasureData,
@@ -88,13 +88,13 @@ export const optionsAreValid = (
  * @param dataView
  */
 
-export const mapOptionsToState = (
+export const mapOptionsToProps = (
     options: VisualUpdateOptions,
     settings: VisualSettings,
     colorPalette: IColorPalette
-): VisualState => {
+): VisualProps => {
     const dataView: DataView = options.dataViews[0];
-    const dataViewPartial: Partial<VisualState> = mapDataView(
+    const dataViewPartial: Partial<VisualProps> = mapDataView(
         dataView,
         settings,
         colorPalette
@@ -109,7 +109,7 @@ export const mapOptionsToState = (
     };
 };
 
-export default mapOptionsToState;
+export default mapOptionsToProps;
 
 export const mapViewport = (viewport: IViewport): ViewportData => ({
     width: viewport.width,
@@ -120,7 +120,7 @@ export const mapDataView = (
     dataView: DataView,
     settings: VisualSettings,
     colorPalette: IColorPalette
-): Partial<VisualState> => {
+): Partial<VisualProps> => {
     const groups: DataViewValueColumnGroup[] = dataView.categorical.values.grouped();
 
     const category: DataViewCategoryColumn = dataView.categorical.categories[0];

@@ -33,6 +33,9 @@ import { Measure, MeasureProps } from "./Measure";
 export interface State {
     x: number;
     y: number;
+    tooltipWidth: number;
+    tooltipHeight: number;
+    positionFixed: boolean;
 }
 
 export interface Entry {
@@ -44,24 +47,33 @@ export interface Props extends DataEntry {
     style?: React.CSSProperties;
     categoryTitle: string;
     categoryValue: string;
+    isTooltipShown?: boolean;
+    viewportHeight: number;
+    viewportWidth: number;
     measures: MeasureData[];
 }
 
 export class Tooltip extends React.Component<Props, State> {
-    public static initialState: State = { x: 0, y: 0 };
+    public static initialState: State = {
+      x: 0,
+      y: 0,
+      tooltipWidth: 0,
+      tooltipHeight: 0,
+      positionFixed: false
+    };
 
     constructor(props: Props) {
         super(props);
-        this.mouseMoveHandler = this.mouseMoveHandler.bind(this);
     }
 
     public state: State = Tooltip.initialState;
+    public tooltipRef: React.RefObject<any> = React.createRef<any>();
 
     componentWillMount() {
         document.addEventListener("mousemove", this.mouseMoveHandler);
     }
 
-    mouseMoveHandler(e: any) {
+    mouseMoveHandler = (e: any) => {
         this.setState({ x: e.pageX, y: e.pageY });
     }
 
@@ -69,8 +81,16 @@ export class Tooltip extends React.Component<Props, State> {
         document.removeEventListener("mousemove", this.mouseMoveHandler);
     }
 
+    reportTooltipSize = (tooltipWidth: number, tooltipHeight: number) => {
+      this.setState({
+        tooltipWidth,
+        tooltipHeight
+      })
+    }
+
     render() {
         const {
+            isTooltipShown,
             measures
         } = this.props;
 
@@ -79,8 +99,10 @@ export class Tooltip extends React.Component<Props, State> {
         return (
             measures && (
                 <div
+                    ref={this.tooltipRef}
                     className="tooltip"
                     style={{
+                        opacity: isTooltipShown ? 1 : 0,
                         top: y + TOOLTIP_OFFSET_Y,
                         left: x + TOOLTIP_OFFSET_X
                     }}
@@ -95,7 +117,7 @@ export class Tooltip extends React.Component<Props, State> {
 }
 
 export const TooltipContent: React.FunctionComponent<Props> = (props: Props) => {
-    const {categoryTitle, categoryValue, measures, dataPoints } = props;
+    const { categoryTitle, categoryValue, measures, dataPoints } = props;
     return (
         <div className="tooltip-content">
             <dl>
